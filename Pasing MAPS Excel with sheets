@@ -1,0 +1,60 @@
+# -*- coding: utf-8 -*-
+"""
+aggregate cell or site level payload terms
+group by in site level
+@author: hesam.mo
+Created on Fri Mar 12
+"""
+
+import pandas as pd
+from pandas import ExcelWriter
+import numpy as np
+
+file_name = r"..\payload input.xlsx"
+#writer = ExcelWriter(r'..\all-revised.xls')
+####### compiling 2G #######
+df = pd.read_excel(file_name, sheet_name='2G')
+df.columns = df.columns.str.upper()
+df['BTS'] = df['2G BTS'].str.extract('([T|E|H|N|B][\d]{4})')
+pay_cols = [col for col in df.columns if 'PAYLOAD' in col]
+#print(list(df.columns))
+print(pay_cols)
+print(df.shape)
+df = df.rename(columns={pay_cols[0]:'PAYLOAD(MB)'})
+#df['PAYLOAD(MB)'] = df['PAYLOAD(MB)']/1000
+dff = df[['TIME','BTS', 'PAYLOAD(MB)']]
+#df.to_excel(writer,'2G')
+del df
+####### compiling 3G #######
+df = pd.read_excel(file_name, sheet_name = '3G')
+df.columns = df.columns.str.upper()
+df['BTS'] = df['3G NODEB'].str.extract('([T|E|H|N|B][\d]{4})')
+pay_cols = [col for col in df.columns if 'PAYLOAD' in col]
+#print(list(df.columns))
+print(pay_cols)
+print(df.shape)
+df = df.rename(columns={pay_cols[0]:'PAYLOAD(MB)'})
+dff1 = df[['TIME','BTS', 'PAYLOAD(MB)']]
+dff = dff.append(dff1)
+#df.to_excel(writer,'3G')
+del df, dff1
+####### compiling 4G FDD #######
+df = pd.read_excel(file_name, sheet_name = '4G FDD')
+df.columns = df.columns.str.upper()
+df['BTS'] = df['4G LTE ENODB'].str.extract('([T|E|H|N|B][\d]{4})')
+pay_cols = [col for col in df.columns if 'PAYLOAD' in col]
+# print(list(df.columns))
+print(pay_cols)
+print(df.shape)
+df = df.rename(columns={pay_cols[0]: 'PAYLOAD(MB)'})
+dff1 = df[['TIME', 'BTS', 'PAYLOAD(MB)']]
+dff = dff.append(dff1)
+# df.to_excel(writer,'4G_FDD')
+del df, dff1
+
+writer = ExcelWriter(r'all-revised.xlsx')
+dff.to_excel(writer,'all')
+dfff = dff.pivot_table(dff,index=['BTS'], columns=['TIME'],aggfunc=np.sum)
+dfff.to_excel(writer,'summary')
+print(dfff.shape)
+writer.save()
